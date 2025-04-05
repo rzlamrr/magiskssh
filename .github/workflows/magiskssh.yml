@@ -1,0 +1,36 @@
+name: Build and Release MagiskSSH
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout source
+      run: git clone https://gitlab.com/d4rcm4rc/MagiskSSH.git
+
+    - name: Setup NDK
+      uses: nttld/setup-ndk@v1
+      id: setup-ndk
+      with:
+        ndk-version: r25c
+        add-to-path: true
+
+    - name: Build zip
+      working-directory: MagiskSSH
+      run: |
+        mkdir build
+        cd build
+        make -f ../all_arches.mk -j4 zip
+      env:
+        ANDROID_ROOT: ${{ steps.setup-ndk.outputs.ndk-path }}
+
+    - name: Upload to GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: build/*.zip
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
